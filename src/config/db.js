@@ -3,26 +3,36 @@ import { env } from "./env.js";
 
 mongoose.set("strictQuery", true);
 
-/**
- * Atlas connection strings are often pasted without a database name
- * ("...mongodb.net/?retryWrites=true"), which silently drops everything into
- * a database called "test". Fall back to an explicit name in that case.
- */
-function resolveDbName(uri) {
+/** The database named in the connection string, or "" when it omits one. */
+function dbNameFromUri(uri) {
   try {
     const path = new URL(uri.replace(/^mongodb(\+srv)?:\/\//, "http://")).pathname;
-    const name = path.replace(/^\//, "");
-    return name || env.dbName;
+    return path.replace(/^\//, "");
   } catch {
-    return env.dbName;
+    return "";
   }
 }
 
 export async function connectDB() {
   try {
+    const uriDbName = dbNameFromUri(env.mongoUri);
+
+    // Atlas connection strings are often pasted without a database name
+    // ("...mongodb.net/?retryWrites=true"), so everything lands in a database
+    // called "test". Warn about it, but do NOT reroute automatically - an
+    // existing deployment's data lives wherever it already is.
+    if (!uriDbName && !env.dbName) {
+      console.warn(
+        '[db] MONGO_URI has no database name, so MongoDB will use "test". ' +
+          "Add one to the URI path, or set MONGO_DB_NAME, once you know which " +
+          "database your data is in."
+      );
+    }
+
     const conn = await mongoose.connect(env.mongoUri, {
       serverSelectionTimeoutMS: 8000,
-      dbName: resolveDbName(env.mongoUri),
+      // Only override when explicitly asked to.
+      ...(env.dbName ? { dbName: env.dbName } : {}),
     });
     console.log(`[db] connected -> ${conn.connection.host}/${conn.connection.name}`);
     return conn;

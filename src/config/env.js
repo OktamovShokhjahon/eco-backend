@@ -21,8 +21,10 @@ export const env = {
   port: Number(process.env.PORT || 5000),
   nodeEnv: process.env.NODE_ENV || "development",
   mongoUri: required("MONGO_URI", "mongodb://127.0.0.1:27017/ecohabits"),
-  // Used only when MONGO_URI carries no database name of its own.
-  dbName: process.env.MONGO_DB_NAME || "ecohabits",
+  // Opt-in override. Left unset, the database named in MONGO_URI wins - never
+  // silently redirect a deployment to a different database, that hides all of
+  // its existing data.
+  dbName: process.env.MONGO_DB_NAME || null,
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   clientUrl: process.env.CLIENT_URL || "http://localhost:3000",

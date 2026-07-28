@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node src/seed/seed.js"
+    "seed": "node src/seed/seed.js",
+    "seed:content": "node src/seed/seed-content.js"
   },
   "engines": {
     "node": ">=18"
